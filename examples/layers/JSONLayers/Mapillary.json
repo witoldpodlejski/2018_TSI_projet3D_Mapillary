@@ -2,12 +2,12 @@
     "type": "color",
     "protocol": "wmtsc",
     "networkOptions": { "crossOrigin" : "anonymous" },
-    "id": "OPENSM",
-    "customUrl": "http://osm.oslandia.io/styles/klokantech-basic/%TILEMATRIX/%COL/%ROW.png",
+    "id": "Mapillary",
+    "customUrl": "https://d6a1v2w10ny40.cloudfront.net/v0.1/%TILEMATRIX/%COL/%ROW.png",
     "options": {
         "attribution": {
-            "name":"OpenStreetMap",
-            "url": "http://www.openstreetmap.org/"
+            "name":"Mapillary",
+            "url": "http://www.mapillary.com/"
         },
         "tileMatrixSet": "PM",
         "mimetype": "image/png"

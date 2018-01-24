@@ -8,14 +8,14 @@
 
 // Position near Annecy lake.
 // var positionOnGlobe = { longitude: 6.2230, latitude: 45.8532, altitude: 5000 };
-
-var fetchlink = itowns.fetchLink;
+'use strict'
+// const fetchlink = require("fetch-link");
 // Position near Gerbier mountain.
 let lat1  =  48.859031;
 let long1 = 2.293377;
 let lat2  = 48.857577;
 let long2 = 2.295619;
-var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
+var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 4000 };
 var THREE = itowns.THREE;
 
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
@@ -41,10 +41,9 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(addLaye
 // These will deform iTowns globe geometry to represent terrain elevation.
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
-         
-let promises_mp = [];
 
-fetchlink.all("https://a.mapillary.com/v3/images/?"
+
+promises.push(fetch("https://a.mapillary.com/v3/images/?"
     +"bbox="
     +long1
     +","
@@ -54,18 +53,45 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
     +","
     +lat2
     +"&client_id=VTRaYjFvTUZ4THpELTQ1ODFQaV9QUTo2NmI1YTM3MjlmNjM4NDFk").then(
-        results => {
-            for(let i=0; i< results.length; i++){
-                promises_mp.push(results[i].json());
-            };
-}).then(() => {
-    Promise.all(promises_mp).then(jsons => {
-        jsons.forEach(json=>{
-            addMeshes(json);
-        });
-    })
-});
-
+        result => {
+            promises.push(result.json());
+            console.log("result");
+            let props  = result.headers.get('Link').split(',');
+            let isNext = testNext(props);
+            let index  = 2;
+            console.log(isNext);
+            if(isNext){
+                return promises.push(fetch("https://a.mapillary.com/v3/images/?"
+                +"page="
+                +index   
+                +"&bbox="
+                +long1
+                +","
+                +lat1
+                +","
+                +long2
+                +","
+                +lat2
+                +"&client_id=VTRaYjFvTUZ4THpELTQ1ODFQaV9QUTo2NmI1YTM3MjlmNjM4NDFk").then(result =>{
+                    props = result.headers.get('Link').split(',');
+                    isNext = testNext(props);
+                    result.json();
+                    console.log(index);
+                    index ++;
+                    if(!testNext(props)){
+                        isNext=false;
+                    }
+                    return result.json();
+                }));
+            }
+            else{
+                return jsons;
+            }
+        }
+    ).then(res => {
+        //console.log(res);
+        return res;
+    }));
 
 
 function testNext(props) {
@@ -81,8 +107,12 @@ function testNext(props) {
     }
     return isNext;
 }
+
 function addMeshes(json) {
+    console.log(json);
+    console.log(json.features[0].geometry.coordinates[0]);
     for (let i = 0; i < json.features.length; i++) {
+        console.log(i);
         addMeshToScene(json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1],0xff0000,0.1);
     }
     
@@ -90,14 +120,18 @@ function addMeshes(json) {
 function addMeshToScene(long, lat, color, size) {
     // creation of the new mesh (a cylinder)
 
-    var geometry = new THREE.CylinderGeometry(size, size, 100, 8);
+    var geometry = new THREE.CylinderGeometry(size, size, 10000, 8);
     var material = new THREE.MeshBasicMaterial({ color: color });
     var mesh = new THREE.Mesh(geometry, material);
+
+    console.log(long, lat);
 
     let coord = new itowns.Coordinates('EPSG:4326',
                      long,
                      lat,
                     positionOnGlobe.altitude).as('EPSG:4978').xyz();
+
+    console.log(coord);
 
     // position and orientation of the mesh
     mesh.position.copy(coord);
@@ -123,6 +157,11 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
     Promise.all(promises).then(function (result) {
 
             //console.log(result[3]);
+            let jsons = result[3];
+            console.log(result);
+            for (var i = 0; i < jsons.length; i++) {
+                addMeshes(jsons[i]);
+            }
 
             addMeshToScene(long1,lat1,new THREE.Color( 'skyblue' ),5);
             addMeshToScene(long2,lat1,new THREE.Color( 'skyblue' ),5);
