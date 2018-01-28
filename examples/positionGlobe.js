@@ -66,27 +66,12 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
     })
 });
 
-
-
-function testNext(props) {
-    let isNext = false;
-    for (var i = 0; i < props.length; i++) {
-        //console.log(props[i]);
-        let sousProps = props[i].split(';');
-        let keyword = sousProps[1].substring(5);
-        console.log(keyword);
-            if (keyword == '"next"') {
-                isNext = true;
-            }
-    }
-    return isNext;
-}
 function addMeshes(json) {
     for (let i = 0; i < json.features.length; i++) {
-        addMeshToScene(json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1],0xff0000,0.1);
+        //addMeshToScene(json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1],0xff0000,0.1);
     }
-    
 }
+
 function addMeshToScene(long, lat, color, size) {
     // creation of the new mesh (a cylinder)
 
@@ -110,6 +95,8 @@ function addMeshToScene(long, lat, color, size) {
 
     // add the mesh to the scene
     globeView.scene.add(mesh);
+
+    console.log(mesh.position);
 
     // make the object usable from outside of the function
     //globeView.mesh = mesh;
@@ -135,6 +122,77 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
     });
 });
 
+var visibleNodes = [];
+var visibleNodesMeshes = [];
+var deepest = 0;
+
+function checkNode(node){
+    if(node.visible){
+        if(node.children.length > 1){
+            for(let i=1; i<node.children.length; i++){
+                checkNode(node.children[i]);
+            }
+        }else{
+            console.log(deepest);
+            if(node.level > deepest){
+                visibleNodes = [];
+                deepest = node.level;
+                visibleNodes.push(node)
+            }else if(node.level == deepest){
+                visibleNodes.push(node);
+            }else{
+                //visibleNodes.push(node);
+            }
+        }
+    }
+}
 
 exports.view = globeView;
 exports.initialPosition = positionOnGlobe;
+
+function locate_nodes(){
+    visibleNodes.forEach(node => {
+        var center = node.geometry.center;
+        var geometry;
+        if(node.wmtsCoords.WGS84G[0].zoom < 10){
+            geometry = new THREE.CylinderGeometry(20, 20, 10000, 8);
+        }else{
+            geometry = new THREE.CylinderGeometry(20, 20, 1000, 8);
+        }
+        var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        var mesh = new THREE.Mesh(geometry, material);
+
+        // position and orientation of the mesh
+        mesh.position.copy(new THREE.Vector3(node.matrixWorld.elements[12], node.matrixWorld.elements[13], node.matrixWorld.elements[14]));
+
+        mesh.lookAt(new THREE.Vector3(0, 0, 0));
+        mesh.rotateX(Math.PI / 2);
+
+        // update coordinate of the mesh
+        mesh.updateMatrixWorld();
+
+        // add the mesh to the scene
+        globeView.scene.add(mesh);
+        visibleNodesMeshes.push(mesh);
+    })
+}
+
+function gui_globeView_log(){
+    console.log(globeView);
+}
+function gui_launch_node_research(){
+    deepest = 0;
+    visibleNodes = [];
+    while(visibleNodesMeshes.length > 0){
+        var mesh = visibleNodesMeshes.pop();
+        globeView.scene.remove(mesh);
+    }
+    for(let j=0; j<globeView.wgs84TileLayer.level0Nodes.length; j++){
+        checkNode(globeView.wgs84TileLayer.level0Nodes[j]);
+    }
+    locate_nodes();
+    console.log(visibleNodes);
+    console.log(visibleNodesMeshes);
+}
+menuGlobe.addGUI("log_globeView", gui_globeView_log);
+menuGlobe.addGUI("launch_node_research", gui_launch_node_research);
