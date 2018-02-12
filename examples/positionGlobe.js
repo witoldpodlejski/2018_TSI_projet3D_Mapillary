@@ -11,24 +11,48 @@
 
 var fetchlink = itowns.fetchLink;
 // Position near Gerbier mountain.
+/*
 let lat1  =  48.859031;
 let long1 = 2.293377;
 let lat2  = 48.857577;
 let long2 = 2.295619;
+*/
+
+let lat1  =48.806937;
+let long1 = 2.116329;
+let lat2  = 48.804554;
+let long2 =2.118080;
+
+
 var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
 var THREE = itowns.THREE;
+
+
+let apiKey = "&key=AIzaSyD2R3pKLOwX6lgTTdVfb1_kQcavwiqrxWM";
+
+let googleURL = "https://maps.googleapis.com/maps/api/elevation/json?locations=";
+
+let cors = "http://localhost:8081/";
 
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
 var viewerDiv = document.getElementById('viewerDiv');
 
 // Instanciate iTowns GlobeView*
-var globeView = new itowns.GlobeView(viewerDiv, positionOnGlobe, { renderer: renderer });
-
-var promises = [];
-
-var menuGlobe = new GuiTools('menuDiv');
-
+var globeView  = new itowns.GlobeView(viewerDiv, positionOnGlobe, { renderer: renderer });
+var promises   = [];
+var menuGlobe  = new GuiTools('menuDiv');
 menuGlobe.view = globeView;
+
+
+function onMouseMove( event ) {
+
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+
+    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+}
 
 function addLayerCb(layer) {
     return globeView.addLayer(layer);
@@ -61,28 +85,38 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
 }).then(() => {
     Promise.all(promises_mp).then(jsons => {
         jsons.forEach(json=>{
+            //console.log(json);
             addMeshes(json);
         });
     })
 });
 
 function addMeshes(json) {
-    for (let i = 0; i < json.features.length; i++) {
-        //addMeshToScene(json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1],0xff0000,0.1);
-    }
+
+    let request = cors + googleURL + json.features[1].geometry.coordinates[1] + "," + json.features[1].geometry.coordinates[0] + apiKey;
+    console.log(request);
+    itowns.Fetcher.json(request)
+    .then( result => {return result.results[0].elevation})
+    .then(altitude =>{
+         for (let i = 0; i < json.features.length; i++) {
+            addMeshToScene(json.features[i].geometry.coordinates[0],json.features[i].geometry.coordinates[1], altitude ,0xff0000,0.1);
+        }
+    });
+
+
 }
 
-function addMeshToScene(long, lat, color, size) {
+function addMeshToScene(long, lat, altitude, color, size) {
     // creation of the new mesh (a cylinder)
 
-    var geometry = new THREE.CylinderGeometry(size, size, 100, 8);
-    var material = new THREE.MeshBasicMaterial({ color: color });
-    var mesh = new THREE.Mesh(geometry, material);
+    var geometry = new THREE.SphereGeometry( 5, 32, 32 );
+    var material = new THREE.MeshLambertMaterial( {color: 0xffff00} );
+    var mesh     = new THREE.Mesh( geometry, material );
 
     let coord = new itowns.Coordinates('EPSG:4326',
                      long,
                      lat,
-                    positionOnGlobe.altitude).as('EPSG:4978').xyz();
+                    altitude).as('EPSG:4978').xyz();
 
     // position and orientation of the mesh
     mesh.position.copy(coord);
@@ -96,10 +130,10 @@ function addMeshToScene(long, lat, color, size) {
     // add the mesh to the scene
     globeView.scene.add(mesh);
 
-    console.log(mesh.position);
+    //console.log(mesh.position);
 
     // make the object usable from outside of the function
-    //globeView.mesh = mesh;
+    globeView.mesh = mesh;
 }
 
 // Listen for globe full initialisation event
@@ -111,16 +145,28 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
 
             //console.log(result[3]);
 
-            addMeshToScene(long1,lat1,new THREE.Color( 'skyblue' ),5);
-            addMeshToScene(long2,lat1,new THREE.Color( 'skyblue' ),5);
-            addMeshToScene(long2,lat2,new THREE.Color( 'skyblue' ),5);
-            addMeshToScene(long1,lat2,new THREE.Color( 'skyblue' ),5);
+            //addMeshToScene(long1,lat1,new THREE.Color( 'skyblue' ),5);
+            //addMeshToScene(long2,lat1,new THREE.Color( 'skyblue' ),5);
+            //addMeshToScene(long2,lat2,new THREE.Color( 'skyblue' ),5);
+            //addMeshToScene(long1,lat2,new THREE.Color( 'skyblue' ),5);
 
             menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
             menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
             globeView.controls.setTilt(60, true);
+
+
     });
 });
+
+/*
+var evt = new MouseEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    view: window,
+  });
+
+globeView.eventToViewCoords(evt); 
+*/
 
 var visibleNodes = [];
 var visibleNodesMeshes = [];
@@ -133,7 +179,7 @@ function checkNode(node){
                 checkNode(node.children[i]);
             }
         }else{
-            console.log(deepest);
+            //console.log(deepest);
             if(node.level > deepest){
                 visibleNodes = [];
                 deepest = node.level;
@@ -196,3 +242,4 @@ function gui_launch_node_research(){
 }
 menuGlobe.addGUI("log_globeView", gui_globeView_log);
 menuGlobe.addGUI("launch_node_research", gui_launch_node_research);
+
