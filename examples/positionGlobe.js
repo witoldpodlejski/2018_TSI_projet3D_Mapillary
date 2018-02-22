@@ -136,9 +136,13 @@ function addMeshToScene(long, lat, altitude, color, size) {
 }
 
 // Listen for globe full initialisation event
-globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function () {
+globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function globeInitialized() {
     // eslint-disable-next-line no-console
     console.info('Globe initialized');
+
+    Promise.all(promises).then(function init() {
+        menuGlobe.addImageryLayersGUI(globeView.getLayers(function filterColor(l) { return l.type === 'color'; }));
+        menuGlobe.addElevationLayersGUI(globeView.getLayers(function filterElevation(l) { return l.type === 'elevation'; }));
 
     Promise.all(promises).then(function (result) {
 
