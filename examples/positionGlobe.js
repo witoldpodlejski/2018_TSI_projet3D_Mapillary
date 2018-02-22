@@ -199,6 +199,8 @@ function evenement(event){
     console.log(globeView);
     var mouse = new itowns.THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
     console.log(mouse);
+    var test = new itowns.THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+    console.log(test);
     var raycaster = new itowns.THREE.Raycaster();
     raycaster.setFromCamera(mouse, globeView.camera.camera3D);
     var intersects = raycaster.intersectObjects( visibleNodesMeshes );
