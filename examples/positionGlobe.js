@@ -41,8 +41,7 @@ var viewerDiv = document.getElementById('viewerDiv');
 var globeView  = new itowns.GlobeView(viewerDiv, positionOnGlobe, { renderer: renderer });
 var promises   = [];
 var menuGlobe  = new GuiTools('menuDiv');
-menuGlobe.view = globeView;
-
+menuGlobe.view = globeView; 
 
 function onMouseMove( event ) {
 
@@ -158,15 +157,15 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
     });
 });
 
-/*
-var evt = new MouseEvent("click", {
-    bubbles: true,
-    cancelable: true,
-    view: window,
-  });
 
-globeView.eventToViewCoords(evt); 
-*/
+// var evt = new MouseEvent("click", {
+//     bubbles: true,
+//     cancelable: true,
+//     view: window,
+//   });
+
+
+
 
 var visibleNodes = [];
 var visibleNodesMeshes = [];
@@ -191,6 +190,23 @@ function checkNode(node){
             }
         }
     }
+}
+
+
+window.addEventListener('click', evenement, false);
+function evenement(event){
+    console.log("EVENT");
+    console.log(globeView);
+    var mouse = new itowns.THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+    console.log(mouse);
+    var raycaster = new itowns.THREE.Raycaster();
+    raycaster.setFromCamera(mouse, globeView.camera.camera3D);
+    var intersects = raycaster.intersectObjects( visibleNodesMeshes );
+    for ( var i = 0; i < intersects.length; i++ ) {
+        console.log(intersects[i]);
+        intersects[i].object.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+    }
+    gui_launch_node_research();
 }
 
 exports.view = globeView;
