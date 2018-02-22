@@ -201,10 +201,8 @@ window.addEventListener('click', evenement, false);
 function evenement(event){
     console.log("EVENT");
     console.log(globeView);
-    var mouse = new itowns.THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
+    var mouse = globeView.eventToNormalizedCoords(event);
     console.log(mouse);
-    var test = new itowns.THREE.Vector2((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1);
-    console.log(test);
     var raycaster = new itowns.THREE.Raycaster();
     raycaster.setFromCamera(mouse, globeView.camera.camera3D);
     var intersects = raycaster.intersectObjects( visibleNodesMeshes );
@@ -213,6 +211,15 @@ function evenement(event){
         intersects[i].object.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
     }
     gui_launch_node_research();
+    for ( var i = 0; i < visibleNodes.length; i++ ) {
+        var obb = visibleNodes[i].children[0].box3D;
+        var center = visibleNodes[i].geometry.center;
+        var min = center.add(obb.min);
+        var max = center.add(obb.max);
+        var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
+        var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
+        console.log(min_coords, max_coords);
+    }
 }
 
 exports.view = globeView;
@@ -265,3 +272,4 @@ function gui_launch_node_research(){
 menuGlobe.addGUI("log_globeView", gui_globeView_log);
 menuGlobe.addGUI("launch_node_research", gui_launch_node_research);
 
+});
