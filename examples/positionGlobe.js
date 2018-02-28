@@ -26,7 +26,7 @@ let long2 =2.118080;
 
 var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
 var THREE = itowns.THREE;
-
+var UTILS = itowns.UTILS;
 
 let apiKey = "&key=AIzaSyD2R3pKLOwX6lgTTdVfb1_kQcavwiqrxWM";
 
@@ -84,7 +84,7 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
 }).then(() => {
     Promise.all(promises_mp).then(jsons => {
         jsons.forEach(json=>{
-            //console.log(json);
+            ////console.log(json);
             addMeshes(json);
         });
     })
@@ -93,7 +93,7 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
 function addMeshes(json) {
 
     let request = cors + googleURL + json.features[1].geometry.coordinates[1] + "," + json.features[1].geometry.coordinates[0] + apiKey;
-    console.log(request);
+    //console.log(request);
     itowns.Fetcher.json(request)
     .then( result => {return result.results[0].elevation})
     .then(altitude =>{
@@ -129,7 +129,7 @@ function addMeshToScene(long, lat, altitude, color, size) {
     // add the mesh to the scene
     globeView.scene.add(mesh);
 
-    //console.log(mesh.position);
+    ////console.log(mesh.position);
 
     // make the object usable from outside of the function
     globeView.mesh = mesh;
@@ -146,7 +146,7 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
 
     Promise.all(promises).then(function (result) {
 
-            //console.log(result[3]);
+            ////console.log(result[3]);
 
             //addMeshToScene(long1,lat1,new THREE.Color( 'skyblue' ),5);
             //addMeshToScene(long2,lat1,new THREE.Color( 'skyblue' ),5);
@@ -182,7 +182,7 @@ function checkNode(node){
                 checkNode(node.children[i]);
             }
         }else{
-            //console.log(deepest);
+            ////console.log(deepest);
             if(node.level > deepest){
                 visibleNodes = [];
                 deepest = node.level;
@@ -199,15 +199,15 @@ function checkNode(node){
 
 window.addEventListener('click', evenement, false);
 function evenement(event){
-    console.log("EVENT");
-    console.log(globeView);
+    //console.log("EVENT");
+    //console.log(globeView);
     var mouse = globeView.eventToNormalizedCoords(event);
-    console.log(mouse);
+    //console.log(mouse);
     var raycaster = new itowns.THREE.Raycaster();
     raycaster.setFromCamera(mouse, globeView.camera.camera3D);
     var intersects = raycaster.intersectObjects( visibleNodesMeshes );
     for ( var i = 0; i < intersects.length; i++ ) {
-        console.log(intersects[i]);
+        //console.log(intersects[i]);
         intersects[i].object.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
     }
     gui_launch_node_research();
@@ -218,7 +218,7 @@ function evenement(event){
         var max = center.add(obb.max);
         var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
         var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
-        console.log(min_coords, max_coords);
+        //console.log(min_coords, max_coords);
     }
 }
 
@@ -253,7 +253,7 @@ function locate_nodes(){
 }
 
 function gui_globeView_log(){
-    console.log(globeView);
+    //console.log(globeView);
 }
 function gui_launch_node_research(){
     deepest = 0;
@@ -266,8 +266,8 @@ function gui_launch_node_research(){
         checkNode(globeView.wgs84TileLayer.level0Nodes[j]);
     }
     locate_nodes();
-    console.log(visibleNodes);
-    console.log(visibleNodesMeshes);
+    //console.log(visibleNodes);
+    //console.log(visibleNodesMeshes);
 }
 menuGlobe.addGUI("log_globeView", gui_globeView_log);
 menuGlobe.addGUI("launch_node_research", gui_launch_node_research);
