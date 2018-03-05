@@ -44,15 +44,7 @@ var promises   = [];
 var menuGlobe  = new GuiTools('menuDiv');
 menuGlobe.view = globeView; 
 
-function onMouseMove( event ) {
 
-    // calculate mouse position in normalized device coordinates
-    // (-1 to +1) for both components
-
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-
-}
 
 function addLayerCb(layer) {
     return globeView.addLayer(layer);
@@ -66,9 +58,10 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(addLaye
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
          
-let promises_mp = [];
 
-fetchlink.all("https://a.mapillary.com/v3/images/?"
+function requestMapillary(long1, lat1, long2, lat2) {
+    let promises_mp = [];
+    fetchlink.all("https://a.mapillary.com/v3/images/?"
     +"bbox="
     +long1
     +","
@@ -82,14 +75,17 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
             for(let i=0; i< results.length; i++){
                 promises_mp.push(results[i].json());
             };
-}).then(() => {
-    Promise.all(promises_mp).then(jsons => {
-        jsons.forEach(json=>{
-            ////console.log(json);
-            addMeshes(json);
-        });
-    })
-});
+    }).then(() => {
+        Promise.all(promises_mp).then(jsons => {
+            jsons.forEach(json=>{
+                console.log(json);
+                addMeshes(json);
+            });
+        })
+    });
+}
+
+requestMapillary(long1, lat1, long2, lat2);
 
 /** Build a url for a picture with the given key
  */ 
@@ -184,17 +180,9 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
 
     Promise.all(promises).then(function (result) {
 
-            ////console.log(result[3]);
-
-            //addMeshToScene(long1,lat1,new THREE.Color( 'skyblue' ),5);
-            //addMeshToScene(long2,lat1,new THREE.Color( 'skyblue' ),5);
-            //addMeshToScene(long2,lat2,new THREE.Color( 'skyblue' ),5);
-            //addMeshToScene(long1,lat2,new THREE.Color( 'skyblue' ),5);
-
             menuGlobe.addImageryLayersGUI(globeView.getLayers(function (l) { return l.type === 'color'; }));
             menuGlobe.addElevationLayersGUI(globeView.getLayers(function (l) { return l.type === 'elevation'; }));
             globeView.controls.setTilt(60, true);
-
 
     });
 });
@@ -235,8 +223,9 @@ function checkNode(node){
 }
 
 
-//window.addEventListener('click', evenement, false);
+window.addEventListener('click', evenement, false);
 function evenement(event){
+    
     //console.log("EVENT");
     //console.log(globeView);
     var mouse = globeView.eventToNormalizedCoords(event);
@@ -244,20 +233,23 @@ function evenement(event){
     var raycaster = new itowns.THREE.Raycaster();
     raycaster.setFromCamera(mouse, globeView.camera.camera3D);
     var intersects = raycaster.intersectObjects( visibleNodesMeshes );
+
     for ( var i = 0; i < intersects.length; i++ ) {
-        //console.log(intersects[i]);
-        intersects[i].object.material = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        console.log(intersects[i]);
+        intersects[i].object.material = new THREE.MeshBasicMaterial({ color: "blue" });
     }
     gui_launch_node_research();
-    for ( var i = 0; i < visibleNodes.length; i++ ) {
-        var obb = visibleNodes[i].children[0].box3D;
-        var center = visibleNodes[i].geometry.center;
-        var min = center.add(obb.min);
-        var max = center.add(obb.max);
-        var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
-        var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
-        //console.log(min_coords, max_coords);
-    }
+
+    //console.log(visibleNodesMeshes);
+    var min = visibleNodesMeshes["0"].position;
+    var max = visibleNodesMeshes[visibleNodesMeshes.length-1].position;    
+
+    var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
+    var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
+
+    console.log(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+    requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+    
 }
 
 exports.view = globeView;
@@ -267,31 +259,35 @@ function locate_nodes(){
     visibleNodes.forEach(node => {
         var center = node.geometry.center;
         var geometry;
+        
         if(node.wmtsCoords.WGS84G[0].zoom < 10){
             geometry = new THREE.CylinderGeometry(20, 20, 10000, 8);
-        }else{
+        }
+
+        else{
             geometry = new THREE.CylinderGeometry(20, 20, 1000, 8);
         }
+        
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         var mesh = new THREE.Mesh(geometry, material);
 
         // position and orientation of the mesh
         mesh.position.copy(new THREE.Vector3(node.matrixWorld.elements[12], node.matrixWorld.elements[13], node.matrixWorld.elements[14]));
 
-        mesh.lookAt(new THREE.Vector3(0, 0, 0));
-        mesh.rotateX(Math.PI / 2);
+        //mesh.lookAt(new THREE.Vector3(0, 0, 0));
+        //mesh.rotateX(Math.PI / 2);
 
         // update coordinate of the mesh
-        mesh.updateMatrixWorld();
+        //mesh.updateMatrixWorld();
 
         // add the mesh to the scene
-        globeView.scene.add(mesh);
+        //globeView.scene.add(mesh);
         visibleNodesMeshes.push(mesh);
     })
 }
 
 function gui_globeView_log(){
-    //console.log(globeView);
+    console.log(globeView);
 }
 function gui_launch_node_research(){
     deepest = 0;
@@ -305,8 +301,9 @@ function gui_launch_node_research(){
     }
     locate_nodes();
     //console.log(visibleNodes);
-    //console.log(visibleNodesMeshes);
+    console.log(visibleNodesMeshes);
 }
+
 menuGlobe.addGUI("log_globeView", gui_globeView_log);
 menuGlobe.addGUI("launch_node_research", gui_launch_node_research);
 
