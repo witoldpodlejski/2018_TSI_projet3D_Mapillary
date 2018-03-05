@@ -45,6 +45,14 @@ var menuGlobe  = new GuiTools('menuDiv');
 menuGlobe.view = globeView; 
 
 
+var visibleNodes = [];
+var visibleNodesMeshes = [];
+var deepest = 0;
+var meshes = [];
+
+
+
+
 
 function addLayerCb(layer) {
     return globeView.addLayer(layer);
@@ -57,11 +65,12 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(addLaye
 // These will deform iTowns globe geometry to represent terrain elevation.
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
+// promises.push(itowns.Fetcher.json('./layers/JSONLayers/Mapillary.json').then(addLayerCb));
          
 
 function requestMapillary(long1, lat1, long2, lat2) {
     let promises_mp = [];
-    fetchlink.all("https://a.mapillary.com/v3/images/?"
+    fetchlink.all(  "https://a.mapillary.com/v3/images/?"
     +"bbox="
     +long1
     +","
@@ -77,15 +86,17 @@ function requestMapillary(long1, lat1, long2, lat2) {
             };
     }).then(() => {
         Promise.all(promises_mp).then(jsons => {
-            jsons.forEach(json=>{
-                console.log(json);
-                addMeshes(json);
-            });
+            if(jsons.length > 0){
+                jsons.forEach(json=>{
+                    //console.log(json);
+                    addMeshes(json);
+                });
+            }
+
         })
     });
 }
 
-requestMapillary(long1, lat1, long2, lat2);
 
 /** Build a url for a picture with the given key
  */ 
@@ -95,19 +106,21 @@ function buildPhotoURL(key){
 
 
 function addMeshes(json) {
+    var result;
+    var layer = globeView.wgs84TileLayer;
+    let altitude;
+    let latitude;
+    let longitude;
 
-    let request = cors + googleURL + json.features[1].geometry.coordinates[1] + "," + json.features[1].geometry.coordinates[0] + apiKey;
-    //console.log(request);
-    itowns.Fetcher.json(request)
-    .then( result => {return result.results[0].elevation})
-    .then(altitude =>{
-        console.log(json);
-         for (let i = 0; i < json.features.length; i++) {
-            addMeshToScene(json.features[i].geometry.coordinates[0],json.features[i].geometry.coordinates[1], altitude ,0xff0000,0.1,json.features[i].properties.key);
+    if(json.features.length > 0){
+        for (let i = 0; i < json.features.length; i++) {
+            latitude  = json.features[i].geometry.coordinates[0];
+            longitude = json.features[i].geometry.coordinates[1];
+            altitude  = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1])).z;
+            //console.log(latitude, longitude, altitude);
+            addMeshToScene(latitude, longitude, altitude, 0xff0000,0.1,json.features[i].properties.key);
         }
-    });
-
-
+    }
 }
 
 function addMeshToScene(long, lat, altitude, color, size,key) {
@@ -152,6 +165,9 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
 
             // add the mesh to the scene
             globeView.scene.add(mesh);
+            meshes.push(mesh);
+            //console.log(meshes.length);
+            removeMeshToScene();
         },
 
         // onProgress callback currently not supported
@@ -168,6 +184,15 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
     // make the object usable from outside of the function
     globeView.mesh = mesh;
 }
+
+function removeMeshToScene() {
+    if(meshes.length >300){
+        while (meshes.length > 300){
+            globeView.scene.remove(meshes.shift());
+        } 
+    }
+}
+
 
 // Listen for globe full initialisation event
 globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function globeInitialized() {
@@ -197,9 +222,6 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
 
 
 
-var visibleNodes = [];
-var visibleNodesMeshes = [];
-var deepest = 0;
 
 function checkNode(node){
     if(node.visible){
@@ -225,7 +247,7 @@ function checkNode(node){
 
 window.addEventListener('click', evenement, false);
 function evenement(event){
-    
+    console.log(meshes.length);
     //console.log("EVENT");
     //console.log(globeView);
     var mouse = globeView.eventToNormalizedCoords(event);
@@ -240,15 +262,18 @@ function evenement(event){
     }
     gui_launch_node_research();
 
-    //console.log(visibleNodesMeshes);
-    var min = visibleNodesMeshes["0"].position;
-    var max = visibleNodesMeshes[visibleNodesMeshes.length-1].position;    
+    if (visibleNodesMeshes.length > 0) {
+        //console.log(visibleNodesMeshes);
+        var min = visibleNodesMeshes["0"].position;
+        var max = visibleNodesMeshes[visibleNodesMeshes.length-1].position;    
 
-    var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
-    var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
+        var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
+        var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
 
-    console.log(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
-    requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+        console.log(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+        requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+    }
+
     
 }
 
