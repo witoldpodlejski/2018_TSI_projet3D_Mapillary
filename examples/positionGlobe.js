@@ -32,7 +32,8 @@ let apiKey = "&key=AIzaSyD2R3pKLOwX6lgTTdVfb1_kQcavwiqrxWM";
 
 let googleURL = "https://maps.googleapis.com/maps/api/elevation/json?locations=";
 
-let cors = "http://localhost:8081/";
+//let cors = "http://localhost:8081/";
+let cors = "https://cors-anywhere.herokuapp.com/" // à l'école
 
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
 var viewerDiv = document.getElementById('viewerDiv');
@@ -90,6 +91,13 @@ fetchlink.all("https://a.mapillary.com/v3/images/?"
     })
 });
 
+/** Build a url for a picture with the given key
+ */ 
+function buildPhotoURL(key){
+    return "https://d1cuyjsrcm0gby.cloudfront.net/"+ key + "/thumb-320.jpg";
+}
+
+
 function addMeshes(json) {
 
     let request = cors + googleURL + json.features[1].geometry.coordinates[1] + "," + json.features[1].geometry.coordinates[0] + apiKey;
@@ -97,37 +105,67 @@ function addMeshes(json) {
     itowns.Fetcher.json(request)
     .then( result => {return result.results[0].elevation})
     .then(altitude =>{
+        console.log(json);
          for (let i = 0; i < json.features.length; i++) {
-            addMeshToScene(json.features[i].geometry.coordinates[0],json.features[i].geometry.coordinates[1], altitude ,0xff0000,0.1);
+            addMeshToScene(json.features[i].geometry.coordinates[0],json.features[i].geometry.coordinates[1], altitude ,0xff0000,0.1,json.features[i].properties.key);
         }
     });
 
 
 }
 
-function addMeshToScene(long, lat, altitude, color, size) {
+function addMeshToScene(long, lat, altitude, color, size,key) {
     // creation of the new mesh (a cylinder)
 
-    var geometry = new THREE.SphereGeometry( 5, 32, 32 );
-    var material = new THREE.MeshLambertMaterial( {color: 0xffff00} );
-    var mesh     = new THREE.Mesh( geometry, material );
+   // var geometry = new THREE.SphereGeometry( 5, 32, 32 );
+    geometry = new THREE.PlaneGeometry(40, 40)
+    var material;
+    var mesh;    
 
     let coord = new itowns.Coordinates('EPSG:4326',
                      long,
                      lat,
                     altitude).as('EPSG:4978').xyz();
 
-    // position and orientation of the mesh
-    mesh.position.copy(coord);
+    // instantiate a loader
+    var loader = new THREE.TextureLoader();
 
-    mesh.lookAt(new THREE.Vector3(0, 0, 0));
-    mesh.rotateX(Math.PI / 2);
+    // load a resource
+    loader.load(
+        // resource URL
+        buildPhotoURL(key),
 
-    // update coordinate of the mesh
-    mesh.updateMatrixWorld();
+        // onLoad callback
+        function ( texture ) {
+            // in this example we create the material when the texture is loaded
+            material = new THREE.MeshBasicMaterial( {
+                side: THREE.DoubleSide,
+                map: texture
+             });
 
-    // add the mesh to the scene
-    globeView.scene.add(mesh);
+            mesh = new THREE.Mesh( geometry, material );
+                // position and orientation of the mesh
+            mesh.position.copy(coord);
+
+            mesh.lookAt(new THREE.Vector3(1, 0, 0));
+            mesh.rotateX(-Math.PI / 2);
+            //mesh.rotateY(Math.PI);
+
+            // update coordinate of the mesh
+            mesh.updateMatrixWorld();
+
+            // add the mesh to the scene
+            globeView.scene.add(mesh);
+        },
+
+        // onProgress callback currently not supported
+        undefined,
+
+        // onError callback
+        function ( err ) {
+            console.error( 'An error happened.' );
+        }
+    );
 
     ////console.log(mesh.position);
 
@@ -197,7 +235,7 @@ function checkNode(node){
 }
 
 
-window.addEventListener('click', evenement, false);
+//window.addEventListener('click', evenement, false);
 function evenement(event){
     //console.log("EVENT");
     //console.log(globeView);
