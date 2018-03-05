@@ -270,8 +270,10 @@ function evenement(event){
         var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
         var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
 
-        console.log(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
-        requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+        console.log(globeView.controls.getZoom());
+        if(globeView.controls.getZoom()>=17){
+            requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+        }        
     }
 
     
