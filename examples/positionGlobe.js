@@ -65,7 +65,7 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(addLaye
 // These will deform iTowns globe geometry to represent terrain elevation.
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
-// promises.push(itowns.Fetcher.json('./layers/JSONLayers/Mapillary.json').then(addLayerCb));
+promises.push(itowns.Fetcher.json('./layers/JSONLayers/Mapillary.json').then(addLayerCb));
          
 
 function requestMapillary(long1, lat1, long2, lat2) {
@@ -271,8 +271,16 @@ function evenement(event){
         var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
 
         console.log(globeView.controls.getZoom());
+
+
         if(globeView.controls.getZoom()>=17){
             requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
+            globeView.wgs84TileLayer._attachedLayers[3].opacity = 0;
+            globeView.notifyChange(true);
+        }
+        else{
+            globeView.wgs84TileLayer._attachedLayers[3].opacity = 1;
+            globeView.notifyChange(true);
         }        
     }
 
