@@ -28,10 +28,6 @@ var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
 var THREE = itowns.THREE;
 var UTILS = itowns.UTILS;
 
-let apiKey = "&key=AIzaSyD2R3pKLOwX6lgTTdVfb1_kQcavwiqrxWM";
-
-let googleURL = "https://maps.googleapis.com/maps/api/elevation/json?locations=";
-
 //let cors = "http://localhost:8081/";
 let cors = "https://cors-anywhere.herokuapp.com/" // à l'école
 
@@ -58,7 +54,7 @@ $mly.style.visibility = "visible";
 var mly = new Mapillary.Viewer(
             'mly',
             // Replace this with your own client ID from mapillary.com
-            'QjI1NnU0aG5FZFZISE56U3R5aWN4Zzo5ZDMwMzY2ZjBhMzdmYWVi',
+            'VTRaYjFvTUZ4THpELTQ1ODFQaV9QUTo2NmI1YTM3MjlmNjM4NDFk',
             null);
 
 mly.moveCloseTo(lat1, long1)
@@ -84,7 +80,7 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Mapillary.json').then(add
 
 function requestMapillary(long1, lat1, long2, lat2) {
     let promises_mp = [];
-    fetchlink.all(  "https://a.mapillary.com/v3/images/?"
+    fetchlink.all(cors + "https://a.mapillary.com/v3/images/?"
     +"bbox="
     +long1
     +","
