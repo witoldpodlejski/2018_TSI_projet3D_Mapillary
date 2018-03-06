@@ -2,7 +2,7 @@
 
 Integration of mapillary data into iTowns.
 
-/!\ For the moment, using PositionGlobe.js example for testing purpose /!\
+in the files mapillaryIntegration.html and mapillaryIntegration.js
 
 Authors : azarz (Amaury Zarzelli), arnaudgregoire (Arnaud Gregoire), VictorLambert42 (Victor Lambert)
 
