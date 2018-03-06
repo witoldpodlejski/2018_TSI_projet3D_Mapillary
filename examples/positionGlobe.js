@@ -51,6 +51,20 @@ var deepest = 0;
 var meshes = [];
 
 
+var $mly = document.getElementById("mly");
+
+$mly.style.visibility = "visible";
+
+var mly = new Mapillary.Viewer(
+            'mly',
+            // Replace this with your own client ID from mapillary.com
+            'QjI1NnU0aG5FZFZISE56U3R5aWN4Zzo5ZDMwMzY2ZjBhMzdmYWVi',
+            null);
+
+mly.moveCloseTo(lat1, long1)
+    .then(
+        function(node) { console.log(node.key); },
+        function(error) { console.error(error); });
 
 
 
@@ -283,13 +297,19 @@ function evenement(event){
                 meshes[i].updateMatrixWorld();
             }
             globeView.notifyChange(true);
+            $mly.style.visibility = "visible";
         }
         else{
             globeView.wgs84TileLayer._attachedLayers[3].opacity = 1;
             globeView.notifyChange(true);
+            $mly.style.visibility = "hidden";
         }        
     }
 
+    mly.moveCloseTo((min_coords._values[1] + max_coords._values[1])/2, (min_coords._values[0] + max_coords._values[0])/2)
+    .then(
+        function(node) { return 0; },
+        function(error) { console.error(error); });
     
 }
 

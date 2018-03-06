@@ -26,6 +26,15 @@
                 margin-left: 0px;
             }
 
+            #mly {
+                position: absolute;
+                z-index: 1000;
+                top: 0%;
+                left: 70%;
+                width: 30%;
+                height: 30%;
+            }
+
             @media (max-width: 600px) {
                 #menuDiv {
                     display: none;
@@ -36,9 +45,12 @@
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script src="GUI/dat.gui/dat.gui.min.js"></script>
+        <script src='https://unpkg.com/mapillary-js@2.11.1/dist/mapillary.min.js'></script>
+        <link href='https://unpkg.com/mapillary-js@2.11.1/dist/mapillary.min.css' rel='stylesheet' />
     </head>
     <body>
         <div id="viewerDiv"></div>
+        <div id='mly'></div>
         <script src="GUI/GuiTools.js"></script>
         <script src="../dist/itowns.js"></script>
         <script src="../dist/debug.js"></script>
