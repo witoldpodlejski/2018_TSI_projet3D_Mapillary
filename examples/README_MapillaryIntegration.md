@@ -55,6 +55,8 @@ Aux niveaux de zooms inférieurs à 17 (donc lorsque c'est dézoomé), les requ�
 
 Lorsque le niveau de zoom est supérieur ou égal à 17 (donc très zoomé, proche du globe), plutôt que d'afficher la couche raster, on affiche des mesh 3D de type plan, avec comme texture l'image Mapillary correspondante, ainsi que le viewer Mapillary dans le coin supérieur droit de l'image pour naviguer parmi les images. L'image de base de ce viewer est l'image le plus proche du centre de la vue iTowns.
 
+Enfin, nous avons limité le nombre d'images apparaissant à l'écran au nombre de 300 pour éviter les problèmes de mémoire.
+Cela pose des problèmes dans les zones à forte densité d'images car tout ne peut pas être affiché à la fois. 
 
 
 ## Comment faire marcher la démo en local ?
