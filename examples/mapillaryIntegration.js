@@ -1,35 +1,28 @@
+/**
+ * Fichier principal de code
+ * @author Arnaud Grégoire  <arnaud.gregoire@ensg.eu>
+ * @author Victor Lambert <victor.lambert@ensg.eu>
+ * @author Amaury Zarzelli <amaury.zarzelli@ensg.eu>
+ */
 
-/* global itowns, document, renderer, GuiTools, Promise */
-// # Simple Globe viewer
-
-// Define initial camera position
-// Coordinate can be found on https://www.geoportail.gouv.fr/carte
-// setting is "coordonnée geographiques en degres decimaux"
-
-// Position near Annecy lake.
-// var positionOnGlobe = { longitude: 6.2230, latitude: 45.8532, altitude: 5000 };
-
-var fetchlink = itowns.fetchLink;
-// Position near Gerbier mountain.
-/*
-let lat1  =  48.859031;
-let long1 = 2.293377;
-let lat2  = 48.857577;
-let long2 = 2.295619;
-*/
-
+ // Position de départ de la caméra (chateau de Versailles)
 let lat1  = 48.806937;
 let long1 = 2.116329;
 let lat2  = 48.804554;
 let long2 = 2.118080;
 
 
-var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
-var THREE = itowns.THREE;
-var UTILS = itowns.UTILS;
+// Déclaration des différentes variables globales
+var fetchlink = itowns.fetchLink;//module npm utilisé pour enchainer plusieurs requêtes AJAX
+var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 }; // position qui servira à initialisé la caméra
+var THREE = itowns.THREE;// chargement du module Three.js
+var UTILS = itowns.UTILS;// chargement du fichier src/utils/DEMUtils.js utile pour calculer l'altitude
 
+//Nous avons rencontré parfois des erreurs CORS, d'ou l'utilité d'un proxy
+// un proxy local peut être lancé dans le dossier examples avec la commande : node cors-anywhere.js
 //let cors = "http://localhost:8081/";
 let cors = "https://cors-anywhere.herokuapp.com/" // à l'école
+
 
 // `viewerDiv` will contain iTowns' rendering area (`<canvas>`)
 var viewerDiv = document.getElementById('viewerDiv');
@@ -40,33 +33,38 @@ var promises   = [];
 var menuGlobe  = new GuiTools('menuDiv');
 menuGlobe.view = globeView; 
 
-
+// Liste des tuiles visibles
 var visibleNodes = [];
 var visibleNodesMeshes = [];
 var deepest = 0;
+// Liste des images affichées
 var meshes = [];
 
-
+// div contenant le viewer mapillary
 var $mly = document.getElementById("mly");
-
 $mly.style.visibility = "visible";
 
+// On remplit la div correspondate avec le Viewer Mapillary
 var mly = new Mapillary.Viewer(
             'mly',
             // Replace this with your own client ID from mapillary.com
             'VTRaYjFvTUZ4THpELTQ1ODFQaV9QUTo2NmI1YTM3MjlmNjM4NDFk',
             null);
 
+//On le positionne à notre vue de départ
 mly.moveCloseTo(lat1, long1)
     .then(
         function(node) { console.log(node.key); },
         function(error) { console.error(error); });
 
-
-
+/**
+ * Add a layer to GlobeView object
+ * @param{layer} layer - the given layer 
+ */        
 function addLayerCb(layer) {
     return globeView.addLayer(layer);
 }
+
 // Add one imagery layer to the scene
 // This layer is defined in a json file but it could be defined as a plain js
 // object. See Layer* for more info.
@@ -75,12 +73,22 @@ promises.push(itowns.Fetcher.json('./layers/JSONLayers/Ortho.json').then(addLaye
 // These will deform iTowns globe geometry to represent terrain elevation.
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/IGN_MNT_HIGHRES.json').then(addLayerCb));
+// et aussi la couche raster Mapillary
 promises.push(itowns.Fetcher.json('./layers/JSONLayers/Mapillary.json').then(addLayerCb));
          
-
+/**
+ * Send an ajax request to Mapillary asking for mapillary points in the bouding box
+ * (long1,lat1) et (long2,lat2)
+ * Once every requests is arrived, start the function addMeshes
+ * @param {number} long1 
+ * @param {number} lat1 
+ * @param {number} long2 
+ * @param {number} lat2 
+ */
 function requestMapillary(long1, lat1, long2, lat2) {
     let promises_mp = [];
-    fetchlink.all(cors + "https://a.mapillary.com/v3/images/?"
+    // request build
+    fetchlink.all("https://a.mapillary.com/v3/images/?"
     +"bbox="
     +long1
     +","
@@ -98,7 +106,6 @@ function requestMapillary(long1, lat1, long2, lat2) {
         Promise.all(promises_mp).then(jsons => {
             if(jsons.length > 0){
                 jsons.forEach(json=>{
-                    //console.log(json);
                     addMeshes(json);
                 });
             }
@@ -107,14 +114,19 @@ function requestMapillary(long1, lat1, long2, lat2) {
     });
 }
 
-
-/** Build a url for a picture with the given key
- */ 
+/**
+ * Build a url for a Mapillary point picture with the given key
+ * @param {string} key 
+ */
 function buildPhotoURL(key){
     return "https://d1cuyjsrcm0gby.cloudfront.net/"+ key + "/thumb-320.jpg";
 }
 
-
+/**
+ * Extrait du json donné en entrée, la latitude, longitude, altitude, la clé
+ * puis lance la fonction addMeshToScene
+ * @param {json} json 
+ */
 function addMeshes(json) {
     var result;
     var layer = globeView.wgs84TileLayer;
@@ -127,20 +139,27 @@ function addMeshes(json) {
             latitude  = json.features[i].geometry.coordinates[0];
             longitude = json.features[i].geometry.coordinates[1];
             altitude  = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1])).z;
-            //console.log(latitude, longitude, altitude);
             addMeshToScene(latitude, longitude, altitude, 0xff0000,0.1,json.features[i].properties.key);
         }
     }
 }
 
+/**
+ * Update the GlobeView object by adding image mesh in it
+ * @param {number} long 
+ * @param {number} lat 
+ * @param {number} altitude 
+ * @param {*} color 
+ * @param {*} size 
+ * @param {string} key 
+ */
 function addMeshToScene(long, lat, altitude, color, size,key) {
-    // creation of the new mesh (a cylinder)
-
-   // var geometry = new THREE.SphereGeometry( 5, 32, 32 );
+    // creation of the new mesh 
     geometry = new THREE.PlaneGeometry(40, 40)
     var material;
     var mesh;    
 
+    // géoréférencement
     let coord = new itowns.Coordinates('EPSG:4326',
                      long,
                      lat,
@@ -197,6 +216,11 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
     globeView.mesh = mesh;
 }
 
+/**
+ * Fonction qui enlève les images de la scène jusqu'à ce qu'il n'en reste que 300 (système LIFO)
+ * Cette fonction permet un rafraichissement des images, évitant ainsi que le ralentissement de itowns
+ * et permettant de ne garder que les dernières images
+ */
 function removeMeshFromScene() {
     if(meshes.length >300){
         while (meshes.length > 300){
@@ -224,17 +248,10 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
     });
 });
 
-
-// var evt = new MouseEvent("click", {
-//     bubbles: true,
-//     cancelable: true,
-//     view: window,
-//   });
-
-
-
-
-
+/**
+ * Recursive way of testing which tile layers node are visible 
+ * @param {object} node 
+ */
 function checkNode(node){
     if(node.visible){
         if(node.children.length > 1){
@@ -242,28 +259,30 @@ function checkNode(node){
                 checkNode(node.children[i]);
             }
         }else{
-            ////console.log(deepest);
             if(node.level > deepest){
                 visibleNodes = [];
                 deepest = node.level;
                 visibleNodes.push(node)
             }else if(node.level == deepest){
                 visibleNodes.push(node);
-            }else{
-                //visibleNodes.push(node);
             }
         }
     }
 }
 
-
+// ajout de l'évènement "click"
 window.addEventListener('click', evenement, false);
+
+/**
+ * Permet le rafraichissement de la position de la caméra,
+ * déclenche une nouvelle requete mapillary correspondant à la nouvelle position
+ * Change quelle couche est visible Raster/image selon le niveau de zoom
+ * @param {MouseEvent} event 
+ */
 function evenement(event){
-    console.log(meshes.length);
-    //console.log("EVENT");
-    //console.log(globeView);
+    /*
+    Cette partie est inachevé, il s'agissait du raycasting permettant de sélectionner des images dans itowns
     var mouse = globeView.eventToNormalizedCoords(event);
-    //console.log(mouse);
     var raycaster = new itowns.THREE.Raycaster();
     raycaster.setFromCamera(mouse, globeView.camera.camera3D);
     var intersects = raycaster.intersectObjects( visibleNodesMeshes );
@@ -272,6 +291,7 @@ function evenement(event){
         console.log(intersects[i]);
         intersects[i].object.material = new THREE.MeshBasicMaterial({ color: "blue" });
     }
+    */
     gui_launch_node_research();
 
     if (visibleNodesMeshes.length > 0) {
@@ -312,6 +332,9 @@ function evenement(event){
 exports.view = globeView;
 exports.initialPosition = positionOnGlobe;
 
+/**
+ * Fonction permettant de voir où sont situés les différents noeuds
+ */
 function locate_nodes(){
     visibleNodes.forEach(node => {
         var center = node.geometry.center;
@@ -331,21 +354,19 @@ function locate_nodes(){
         // position and orientation of the mesh
         mesh.position.copy(new THREE.Vector3(node.matrixWorld.elements[12], node.matrixWorld.elements[13], node.matrixWorld.elements[14]));
 
-        //mesh.lookAt(new THREE.Vector3(0, 0, 0));
-        //mesh.rotateX(Math.PI / 2);
-
-        // update coordinate of the mesh
-        //mesh.updateMatrixWorld();
-
-        // add the mesh to the scene
-        //globeView.scene.add(mesh);
         visibleNodesMeshes.push(mesh);
     })
 }
-
+/**
+ * Petite fonction de log
+ */
 function gui_globeView_log(){
     console.log(globeView);
 }
+
+/**
+ * Update of which nodes are being watched
+ */
 function gui_launch_node_research(){
     deepest = 0;
     visibleNodes = [];
@@ -357,8 +378,6 @@ function gui_launch_node_research(){
         checkNode(globeView.wgs84TileLayer.level0Nodes[j]);
     }
     locate_nodes();
-    //console.log(visibleNodes);
-    console.log(visibleNodesMeshes);
 }
 
 menuGlobe.addGUI("log_globeView", gui_globeView_log);
