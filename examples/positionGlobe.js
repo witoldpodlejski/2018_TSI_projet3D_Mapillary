@@ -18,10 +18,10 @@ let lat2  = 48.857577;
 let long2 = 2.295619;
 */
 
-let lat1  =48.806937;
+let lat1  = 48.806937;
 let long1 = 2.116329;
 let lat2  = 48.804554;
-let long2 =2.118080;
+let long2 = 2.118080;
 
 
 var positionOnGlobe = { longitude: long1, latitude: lat1, altitude: 100 };
@@ -134,7 +134,7 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
     let coord = new itowns.Coordinates('EPSG:4326',
                      long,
                      lat,
-                    altitude).as('EPSG:4978').xyz();
+                    altitude + 20).as('EPSG:4978').xyz();
 
     // instantiate a loader
     var loader = new THREE.TextureLoader();
@@ -160,6 +160,8 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
             mesh.rotateX(-Math.PI / 2);
             //mesh.rotateY(Math.PI);
 
+            mesh.quaternion.copy(globeView.camera.camera3D.quaternion);
+
             // update coordinate of the mesh
             mesh.updateMatrixWorld();
 
@@ -167,7 +169,7 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
             globeView.scene.add(mesh);
             meshes.push(mesh);
             //console.log(meshes.length);
-            removeMeshToScene();
+            removeMeshFromScene();
         },
 
         // onProgress callback currently not supported
@@ -185,7 +187,7 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
     globeView.mesh = mesh;
 }
 
-function removeMeshToScene() {
+function removeMeshFromScene() {
     if(meshes.length >300){
         while (meshes.length > 300){
             globeView.scene.remove(meshes.shift());
@@ -276,6 +278,10 @@ function evenement(event){
         if(globeView.controls.getZoom()>=17){
             requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
             globeView.wgs84TileLayer._attachedLayers[3].opacity = 0;
+            for (var i = 0; i < meshes.length; i++) {
+                meshes[i].quaternion.copy(globeView.camera.camera3D.quaternion);
+                meshes[i].updateMatrixWorld();
+            }
             globeView.notifyChange(true);
         }
         else{
