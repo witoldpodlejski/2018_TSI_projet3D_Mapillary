@@ -1,9 +1,9 @@
 {
-  "name": "itowns_client_examples",
+  "name": "itowns-mapillary",
   "version": "1.0.0",
-  "description": "Clients of itowns",
-  "main": "main.js",
-  "author": "Itowns",
+  "description": "iTowns-Mappilary integration",
+  "main": "itowns-mapillary.js",
+  "author": "azarz (Amaury Zarzelli), arnaudgregoire (Arnaud Gregoire), VictorLambert42 (Victor Lambert)",
   "license": "ISC",
   "scripts": {
     "build": "webpack -p",
@@ -14,7 +14,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iTowns/itowns_client_examples.git"
+    "url": "git+https://itownsResearch/2018_TSI_projet3D_Mapillary.git"
   },
   "devDependencies": {
     "itowns": "^2.3.0",

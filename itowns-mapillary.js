@@ -71,7 +71,8 @@ promises.push(itowns.Fetcher.json('./layers/Ortho.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/WORLD_DTM.json').then(addLayerCb));
 promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addLayerCb));
 // et aussi la couche raster Mapillary
-promises.push(itowns.Fetcher.json('./layers/Mapillary.json').then(addLayerCb));
+var mapillaryLayer;
+promises.push(itowns.Fetcher.json('./layers/Mapillary.json').then(addLayerCb).then(function(layer) { mapillaryLayer = layer;}));
          
 /**
  * Send an ajax request to Mapillary asking for mapillary points in the bouding box
@@ -130,12 +131,14 @@ function addMeshes(json) {
     let altitude;
     let latitude;
     let longitude;
+	let elevation;
 
     if(json.features.length > 0){
         for (let i = 0; i < json.features.length; i++) {
             latitude  = json.features[i].geometry.coordinates[0];
             longitude = json.features[i].geometry.coordinates[1];
-            altitude  = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1])).z;
+			elevation = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1]));
+            altitude  = elevation ? elevation.z : 0;
             addMeshToScene(latitude, longitude, altitude, 0xff0000,0.1,json.features[i].properties.key);
         }
     }
@@ -299,7 +302,7 @@ function evenement(event){
 
         if(globeView.controls.getZoom()>=17){
             requestMapillary(min_coords._values[0],min_coords._values[1],max_coords._values[0],max_coords._values[1]);
-            globeView.wgs84TileLayer._attachedLayers[3].opacity = 0;
+            mapillaryLayer.opacity = 0;
             for (var i = 0; i < meshes.length; i++) {
                 meshes[i].quaternion.copy(globeView.camera.camera3D.quaternion);
                 meshes[i].updateMatrixWorld();
@@ -308,7 +311,7 @@ function evenement(event){
             $mly.style.visibility = "visible";
         }
         else{
-            globeView.wgs84TileLayer._attachedLayers[3].opacity = 1;
+            mapillaryLayer.opacity = 1;
             globeView.notifyChange(true);
             $mly.style.visibility = "hidden";
         }        
@@ -317,7 +320,7 @@ function evenement(event){
     mly.moveCloseTo((min_coords._values[1] + max_coords._values[1])/2, (min_coords._values[0] + max_coords._values[0])/2)
     .then(
         function(node) { return 0; },
-        function(error) { console.error(error); });
+        function(error) { console.warn(error); });
     
 }
 

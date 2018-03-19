@@ -2,7 +2,7 @@ var path = require('path');
 
 module.exports = {
   entry: {
-      'itowns-client': [path.resolve(__dirname, 'mapillaryIntegration.js') ]
+      'itowns-mapillary': [path.resolve(__dirname, 'itowns-mapillary.js') ]
   },
   devtool: 'source-map',
   output: {
