@@ -1,4 +1,5 @@
 var path = require('path');
+var Uglify = require("uglifyjs-webpack-plugin");
 
 module.exports = {
   entry: {
@@ -15,4 +16,7 @@ module.exports = {
   devServer: {
     publicPath: '/dist/'
   },
+  plugins: [
+      new Uglify()
+  ]
 };
