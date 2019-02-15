@@ -28,7 +28,7 @@ var viewerDiv = document.getElementById('viewerDiv');
 var globeView  = new itowns.GlobeView(viewerDiv, positionOnGlobe);
 var promises   = [];
 var menuGlobe  = new GuiTools(viewerDiv, 'menuDiv');
-menuGlobe.view = globeView; 
+menuGlobe.view = globeView;
 
 // Liste des tuiles visibles
 var visibleNodes = [];
@@ -54,34 +54,42 @@ mly.moveCloseTo(lat1, long1)
         function(node) { console.log(node.key); },
         function(error) { console.error(error); });
 
-/**
- * Add a layer to GlobeView object
- * @param{layer} layer - the given layer 
- */        
-function addLayerCb(layer) {
-    return globeView.addLayer(layer);
+function addElevationLayerFromConfig(config) {
+    config.source = new itowns.WMTSSource(config.source);
+    var layer = new itowns.ElevationLayer(config.id, config);
+    globeView.addLayer(layer);
 }
 
+function addColorLayerFromConfig(config) {
+  config.source = new itowns.WMTSSource(config.source);
+  let layer = new itowns.ColorLayer(config.id, config);
+  globeView.addLayer(layer);
+}
 // Add one imagery layer to the scene
 // This layer is defined in a json file but it could be defined as a plain js
 // object. See Layer* for more info.
-promises.push(itowns.Fetcher.json('./layers/Ortho.json').then(addLayerCb));
+promises.push(itowns.Fetcher.json('./layers/Ortho.json').then(addColorLayerFromConfig));
 // Add two elevation layers.
 // These will deform iTowns globe geometry to represent terrain elevation.
-promises.push(itowns.Fetcher.json('./layers/WORLD_DTM.json').then(addLayerCb));
-promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addLayerCb));
+promises.push(itowns.Fetcher.json('./layers/WORLD_DTM.json').then(addElevationLayerFromConfig));
+promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig));
 // et aussi la couche raster Mapillary
 var mapillaryLayer;
-promises.push(itowns.Fetcher.json('./layers/Mapillary.json').then(addLayerCb).then(function(layer) { mapillaryLayer = layer;}));
-         
+promises.push(itowns.Fetcher.json('./layers/test.json').then(function _(config){
+  config.source = new itowns.TMSSource(config.source);
+  config.fx = 2.5;
+  let layer = new itowns.ColorLayer(config.id, config);
+  globeView.addLayer(layer);
+}).then(function(layer) { mapillaryLayer = layer;}));
+
 /**
  * Send an ajax request to Mapillary asking for mapillary points in the bouding box
  * (long1,lat1) et (long2,lat2)
  * Once every requests is arrived, start the function addMeshes
- * @param {number} long1 
- * @param {number} lat1 
- * @param {number} long2 
- * @param {number} lat2 
+ * @param {number} long1
+ * @param {number} lat1
+ * @param {number} long2
+ * @param {number} lat2
  */
 function requestMapillary(long1, lat1, long2, lat2) {
     let promises_mp = [];
@@ -114,7 +122,7 @@ function requestMapillary(long1, lat1, long2, lat2) {
 
 /**
  * Build a url for a Mapillary point picture with the given key
- * @param {string} key 
+ * @param {string} key
  */
 function buildPhotoURL(key){
     return "https://d1cuyjsrcm0gby.cloudfront.net/"+ key + "/thumb-320.jpg";
@@ -123,21 +131,21 @@ function buildPhotoURL(key){
 /**
  * Extrait du json donné en entrée, la latitude, longitude, altitude, la clé
  * puis lance la fonction addMeshToScene
- * @param {json} json 
+ * @param {json} json
  */
 function addMeshes(json) {
     var result;
-    var layer = globeView.wgs84TileLayer;
+    var layer = globeView.tileLayer;
     let altitude;
     let latitude;
     let longitude;
-	let elevation;
+	  let elevation;
 
     if(json.features.length > 0){
         for (let i = 0; i < json.features.length; i++) {
             latitude  = json.features[i].geometry.coordinates[0];
             longitude = json.features[i].geometry.coordinates[1];
-			elevation = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1]));
+			      elevation = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1]));
             altitude  = elevation ? elevation.z : 0;
             addMeshToScene(latitude, longitude, altitude, 0xff0000,0.1,json.features[i].properties.key);
         }
@@ -146,18 +154,18 @@ function addMeshes(json) {
 
 /**
  * Update the GlobeView object by adding image mesh in it
- * @param {number} long 
- * @param {number} lat 
- * @param {number} altitude 
- * @param {*} color 
- * @param {*} size 
- * @param {string} key 
+ * @param {number} long
+ * @param {number} lat
+ * @param {number} altitude
+ * @param {*} color
+ * @param {*} size
+ * @param {string} key
  */
 function addMeshToScene(long, lat, altitude, color, size,key) {
-    // creation of the new mesh 
+    // creation of the new mesh
     var geometry = new THREE.PlaneGeometry(10, 10)
     var material;
-    var mesh;    
+    var mesh;
 
     // géoréférencement
     let coord = new itowns.Coordinates('EPSG:4326',
@@ -176,7 +184,7 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
         // onLoad callback
         function ( texture ) {
 			texture.minFilter = THREE.LinearFilter;
-			
+
             // in this example we create the material when the texture is loaded
             material = new THREE.MeshBasicMaterial( {
                 side: THREE.DoubleSide,
@@ -227,7 +235,7 @@ function removeMeshFromScene() {
     if(meshes.length >300){
         while (meshes.length > 300){
             globeView.scene.remove(meshes.shift());
-        } 
+        }
     }
 }
 
@@ -244,8 +252,8 @@ globeView.addEventListener(itowns.GLOBE_VIEW_EVENTS.GLOBE_INITIALIZED, function 
 });
 
 /**
- * Recursive way of testing which tile layers node are visible 
- * @param {object} node 
+ * Recursive way of testing which tile layers node are visible
+ * @param {object} node
  */
 function checkNode(node){
     if(node.visible){
@@ -272,7 +280,7 @@ window.addEventListener('click', evenement, false);
  * Permet le rafraichissement de la position de la caméra,
  * déclenche une nouvelle requete mapillary correspondant à la nouvelle position
  * Change quelle couche est visible Raster/image selon le niveau de zoom
- * @param {MouseEvent} event 
+ * @param {MouseEvent} event
  */
 function evenement(event){
     /*
@@ -292,7 +300,7 @@ function evenement(event){
     if (visibleNodesMeshes.length > 0) {
         //console.log(visibleNodesMeshes);
         var min = visibleNodesMeshes["0"].position;
-        var max = visibleNodesMeshes[visibleNodesMeshes.length-1].position;    
+        var max = visibleNodesMeshes[visibleNodesMeshes.length-1].position;
 
         var min_coords = new itowns.Coordinates('EPSG:4978', min).as('EPSG:4326');
         var max_coords = new itowns.Coordinates('EPSG:4978', max).as('EPSG:4326');
@@ -314,14 +322,14 @@ function evenement(event){
             mapillaryLayer.opacity = 1;
             globeView.notifyChange(true);
             $mly.style.visibility = "hidden";
-        }        
+        }
     }
 
     mly.moveCloseTo((min_coords._values[1] + max_coords._values[1])/2, (min_coords._values[0] + max_coords._values[0])/2)
     .then(
         function(node) { return 0; },
         function(error) { console.warn(error); });
-    
+
 }
 
 /**
@@ -331,7 +339,7 @@ function locate_nodes(){
     visibleNodes.forEach(node => {
         var center = node.geometry.center;
         var geometry;
-        
+
         if(node.wmtsCoords.WGS84G[0].zoom < 10){
             geometry = new THREE.CylinderGeometry(20, 20, 10000, 8);
         }
@@ -339,7 +347,7 @@ function locate_nodes(){
         else{
             geometry = new THREE.CylinderGeometry(20, 20, 1000, 8);
         }
-        
+
         var material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
         var mesh = new THREE.Mesh(geometry, material);
 
@@ -366,8 +374,8 @@ function gui_launch_node_research(){
         var mesh = visibleNodesMeshes.pop();
         globeView.scene.remove(mesh);
     }
-    for(let j=0; j<globeView.wgs84TileLayer.level0Nodes.length; j++){
-        checkNode(globeView.wgs84TileLayer.level0Nodes[j]);
+    for(let j=0; j<globeView.tileLayer.level0Nodes.length; j++){
+        checkNode(globeView.tileLayer.level0Nodes[j]);
     }
     locate_nodes();
 }

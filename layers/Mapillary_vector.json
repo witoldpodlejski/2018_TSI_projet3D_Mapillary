@@ -1,12 +1,11 @@
 {
   "id": "Mapillary",
   "source": {
-    "type": "color",
+    "type": "mapbox-vector",
     "networkOptions": { "crossOrigin" : "anonymous" },
-    "url": "https://d6a1v2w10ny40.cloudfront.net/v0.1/%TILEMATRIX/%COL/%ROW.png",
-    "comment":"https://d2munx5tg0hw47.cloudfront.net/tiles/%TILEMATRIX/%COL/%ROW.mapbox",
+    "url":"https://d25uarhxywzl1j.cloudfront.net/v0.1/%TILEMATRIX/%COL/%ROW.mvt",
     "name": "Mapillary",
-    "format": "image/png",
+    "format": "application/x-protobuf",
     "attribution": {
         "name":"Mapillary",
         "url": "http://www.mapillary.com/"

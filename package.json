@@ -17,13 +17,14 @@
     "url": "git+https://itownsResearch/2018_TSI_projet3D_Mapillary.git"
   },
   "devDependencies": {
-    "itowns": "^2.3.0",
-    "proj4": "^2.4.4",
-    "three": "^0.89.0",
     "fetch-link": "^1.3.0",
-    "three.meshline": "^1.0.3",
-    "webpack": "^3.8.1",
-    "webpack-dev-server": "^2.9.3",
-    "uglifyjs-webpack-plugin": "^1.0.3"
+    "itowns": "^2.6.1",
+    "proj4": "^2.5.0",
+    "three": "^0.99.0",
+    "three.meshline": "^1.1.0",
+    "uglifyjs-webpack-plugin": "^1.0.3",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
   }
 }
