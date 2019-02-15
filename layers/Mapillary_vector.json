@@ -3,7 +3,7 @@
   "source": {
     "type": "mapbox-vector",
     "networkOptions": { "crossOrigin" : "anonymous" },
-    "url":"https://d25uarhxywzl1j.cloudfront.net/v0.1/%TILEMATRIX/%COL/%ROW.mvt",
+    "url":"https://d25uarhxywzl1j.cloudfront.net/v0.1/${z}/${x}/${y}.mvt",
     "name": "Mapillary",
     "format": "application/x-protobuf",
     "attribution": {

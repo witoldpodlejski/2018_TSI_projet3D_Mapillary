@@ -74,6 +74,9 @@ promises.push(itowns.Fetcher.json('./layers/Ortho.json').then(addColorLayerFromC
 promises.push(itowns.Fetcher.json('./layers/WORLD_DTM.json').then(addElevationLayerFromConfig));
 promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addElevationLayerFromConfig));
 // et aussi la couche raster Mapillary
+
+
+
 var mapillaryLayer;
 promises.push(itowns.Fetcher.json('./layers/test.json').then(function _(config){
   config.source = new itowns.TMSSource(config.source);
@@ -81,6 +84,10 @@ promises.push(itowns.Fetcher.json('./layers/test.json').then(function _(config){
   let layer = new itowns.ColorLayer(config.id, config);
   globeView.addLayer(layer);
 }).then(function(layer) { mapillaryLayer = layer;}));
+
+
+
+
 
 /**
  * Send an ajax request to Mapillary asking for mapillary points in the bouding box

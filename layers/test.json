@@ -2,7 +2,7 @@
   "id": "Mapillary",
   "source": {
     "networkOptions": { "crossOrigin" : "anonymous" },
-    "url": "https://d25uarhxywzl1j.cloudfront.net/v0.1/%TILEMATRIX/%COL/%ROW.pbf",
+    "url": "https://d25uarhxywzl1j.cloudfront.net/v0.1/${z}/${x}/${y}.mvt",
     "format": "application/x-protobuf;type=mapbox-vector",
     "attribution": {
         "name":"Mapillary",
@@ -13,7 +13,6 @@
         "max": 14
     },
     "tileMatrixSet": "PM",
-    "projection": "EPSG:3857",
     "isInverted": true
   }
 }

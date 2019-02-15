@@ -11,6 +11,7 @@
         "name":"Mapillary",
         "url": "http://www.mapillary.com/"
     },
+    "projection": "EPSG:3857",
     "tileMatrixSet": "PM"
   }
 }
