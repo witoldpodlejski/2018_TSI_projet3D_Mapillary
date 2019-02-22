@@ -77,14 +77,28 @@ promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addEleva
 
 
 
-var mapillaryLayer;
-promises.push(itowns.Fetcher.json('./layers/test.json').then(function _(config){
-  config.source = new itowns.TMSSource(config.source);
-  config.fx = 2.5;
-  let layer = new itowns.ColorLayer(config.id, config);
-  globeView.addLayer(layer);
-}).then(function(layer) { mapillaryLayer = layer;}));
 
+var mvtSource = new itowns.TMSSource({
+    // eslint-disable-next-line no-template-curly-in-string
+    networkOptions: { crossOrigin : "anonymous" },
+    url: "https://d25uarhxywzl1j.cloudfront.net/v0.1/${z}/${x}/${y}.mvt",
+    format: "application/x-protobuf;type=mapbox-vector",
+    attribution: {
+        name:"Mapillary",
+        url: "http://www.mapillary.com/"
+    },
+    zoom: {
+        min: 2,
+        max: 14
+    },
+    tileMatrixSet: 'PM',
+    isInverted: true,
+});
+var mapillaryLayer = new itowns.ColorLayer('MVT', {
+                    source: mvtSource,
+                    fx: 2.5,
+                });
+globeView.addLayer(mapillaryLayer);
 
 
 
@@ -190,7 +204,7 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
 
         // onLoad callback
         function ( texture ) {
-			texture.minFilter = THREE.LinearFilter;
+			       texture.minFilter = THREE.LinearFilter;
 
             // in this example we create the material when the texture is loaded
             material = new THREE.MeshBasicMaterial( {
