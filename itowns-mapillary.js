@@ -1,14 +1,15 @@
 /**
  * Fichier principal de code
- * @author Arnaud Grégoire  <arnaud.gregoire@ensg.eu>
- * @author Victor Lambert <victor.lambert@ensg.eu>
- * @author Amaury Zarzelli <amaury.zarzelli@ensg.eu>
+ * @author Witold Podlejski  <witold.podlejski@ensg.eu>
+ * @author Benoît Messiaen <benoit.messiaen@ensg.eu>
+ * @author Matthieu Peregrini <metthieu.peregrini@ensg.eu>
  */
 
 import * as itowns from 'itowns';
 import * as THREE from 'three';
 import { default as fetchlink } from 'fetch-link';
 import GuiTools from './GuiTools.js';
+import * as style from './VectorTileStyleSupport.js';
 
  // Position de départ de la caméra (chateau de Versailles)
 let lat1  = 48.806937;
@@ -77,28 +78,53 @@ promises.push(itowns.Fetcher.json('./layers/IGN_MNT_HIGHRES.json').then(addEleva
 
 
 
+promises.push(itowns.Fetcher.json('https://raw.githubusercontent.com/Oslandia/postile-openmaptiles/master/style.json').then(function (style) {
+    var supportedLayers = [];
+    var backgroundLayer;
+    style.layers.forEach(function(layer) {
+        if (layer.type === 'background') {
+            backgroundLayer = layer;
+        } else if (['fill', 'line'].indexOf(layer.type) >= 0 &&
+            ['landcover', 'water', 'boundary', 'transportation', 'park'].indexOf(layer['source-layer']) >= 0 &&
+            layer.id.indexOf('bridge') < 0 &&
+            layer.id.indexOf('tunnel') < 0 &&
+            layer.id.indexOf('admin_sub') < 0) {
+            supportedLayers.push(layer);
+        }
+    });
+    function isValidData(data, extentDestination) {
+        // re-use the same vector tiles by interval 4
+        var z = extentDestination.zoom - 2;
+        return extentDestination.zoom, z - z % 4 == data.extent.zoom - 2;
+    }
+    var mvtSource = new itowns.TMSSource({
+        // eslint-disable-next-line no-template-curly-in-string
+        networkOptions: { crossOrigin : "anonymous" },
+        url: "https://d25uarhxywzl1j.cloudfront.net/v0.1/${z}/${x}/${y}.mvt",
+        format: "application/x-protobuf;type=mapbox-vector",
+        attribution: {
+            name:"Mapillary",
+            url: "http://www.mapillary.com/"
+        },
+        zoom: {
+            min: 2,
+            max: 14
+        },
+        tileMatrixSet: 'PM',
+        isInverted: true,
+    });
+    var mapillaryLayer = new itowns.ColorLayer('MVT', {
+        source: mvtSource,
+        fx: 2.5,
+        style: style.mapboxStyle,
+        filter: style.mapboxFilter(supportedLayers),
+        backgroundLayer,
 
-var mvtSource = new itowns.TMSSource({
-    // eslint-disable-next-line no-template-curly-in-string
-    networkOptions: { crossOrigin : "anonymous" },
-    url: "https://d25uarhxywzl1j.cloudfront.net/v0.1/${z}/${x}/${y}.mvt",
-    format: "application/x-protobuf;type=mapbox-vector",
-    attribution: {
-        name:"Mapillary",
-        url: "http://www.mapillary.com/"
-    },
-    zoom: {
-        min: 2,
-        max: 14
-    },
-    tileMatrixSet: 'PM',
-    isInverted: true,
-});
-var mapillaryLayer = new itowns.ColorLayer('MVT', {
-                    source: mvtSource,
-                    fx: 2.5,
-                });
-globeView.addLayer(mapillaryLayer);
+    });
+    return globeView.addLayer(mapillaryLayer);
+}));
+
+
 
 
 
@@ -166,7 +192,7 @@ function addMeshes(json) {
         for (let i = 0; i < json.features.length; i++) {
             latitude  = json.features[i].geometry.coordinates[0];
             longitude = json.features[i].geometry.coordinates[1];
-			      elevation = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1]));
+            elevation = itowns.DEMUtils.getElevationValueAt(layer,new itowns.Coordinates('EPSG:4326', json.features[i].geometry.coordinates[0], json.features[i].geometry.coordinates[1]));
             altitude  = elevation ? elevation.z : 0;
             addMeshToScene(latitude, longitude, altitude, 0xff0000,0.1,json.features[i].properties.key);
         }
@@ -253,8 +279,8 @@ function addMeshToScene(long, lat, altitude, color, size,key) {
  * et permettant de ne garder que les dernières images
  */
 function removeMeshFromScene() {
-    if(meshes.length >300){
-        while (meshes.length > 300){
+    if(meshes.length >1000){
+        while (meshes.length > 1000){
             globeView.scene.remove(meshes.shift());
         }
     }
