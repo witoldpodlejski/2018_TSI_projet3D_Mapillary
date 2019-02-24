@@ -1,7 +1,7 @@
 
-% title: Projet Mapillary 2019
-% author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
-% date: 24/02/2019
+Title: Projet Mapillary 2019
+Author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
+Date: 24/02/2019
 
 # Projet Mapillary v2
 
@@ -32,3 +32,8 @@ La dernière piste explorée etait de remplacer chaque photo par un cercle en 3d
 ## Conclusion
 
 Pour conclure nous n'avons pas réussi à apporter d'implémentation majeures à ce projet hormis sa mise à jour mais nous avons pu débrousailler certaines pistes d'amélioration et découvrir d'autres fonctionalités d'Itowns que celles vues en cours. Nous regrettons le manque de temps et de moyen pour rendre un résultat fonctionel.
+
+
+Title: Projet Mapillary 2019
+Author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
+Date: 24/02/2019
