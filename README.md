@@ -1,8 +1,3 @@
-
-Title: Projet Mapillary 2019
-Author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
-Date: 24/02/2019
-
 # Projet Mapillary v2
 
 ## Objectifs du projet
