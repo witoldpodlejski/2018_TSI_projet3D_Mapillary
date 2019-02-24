@@ -1,8 +1,7 @@
----
-title: Projet Mapillary 2019
-author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
-date: 24/02/2019
----
+
+% title: Projet Mapillary 2019
+% author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
+% date: 24/02/2019
 
 # Projet Mapillary v2
 
