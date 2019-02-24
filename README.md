@@ -30,5 +30,5 @@ Pour conclure nous n'avons pas réussi à apporter d'implémentation majeures à
 
 
 Title: Projet Mapillary 2019
-Author: Witold Podlesjki, Benoît Messiaen et Matthieu Peregrini
+Author: Witold PodleJski, Benoît Messiaen et Matthieu Peregrini
 Date: 24/02/2019
